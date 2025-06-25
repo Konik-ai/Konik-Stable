@@ -6,6 +6,7 @@ import window from 'global/window';
 import PropTypes from 'prop-types';
 import qs from 'query-string';
 
+import { Checkbox, FormControlLabel } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 
@@ -92,9 +93,43 @@ const styles = () => ({
   buttonImage: {
     height: 40,
   },
+  consentWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 12,
+    textAlign: 'center',
+    maxWidth: 400,
+    width: '100%',
+  },
+  consentLabel: {
+    marginRight: 0,
+    marginLeft: 0,
+    '& .MuiTypography-root': {
+      color: 'white',
+      fontSize: 14,
+      marginRight: 0,
+      '@media (max-width: 600px)': {
+        fontSize: 12,
+      },
+    },
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 13,
+    marginTop: 8,
+    textAlign: 'center',
+  },
 });
 
 class AnonymousLanding extends Component {
+
+  state = {
+    agreed: false,
+    showError: false,
+  };
+
   UNSAFE_componentWillMount() {
     if (typeof window.sessionStorage !== 'undefined' && sessionStorage.getItem('redirectURL') === null) {
       const { pathname } = this.props;
@@ -142,7 +177,7 @@ class AnonymousLanding extends Component {
             Manage your devices and view your drives
           </Typography>
           <Typography className={classes.tagline}>
-            Brought to you by Konik AI. 
+            Brought to you by Konik AI.
           </Typography>
           <a
             className="flex items-center pl-4 pr-3 py-2 font-medium border border-white rounded-full hover:bg-[rgba(255,255,255,0.1)] active:bg-[rgba(255,255,255,0.2)] transition-colors"
@@ -153,12 +188,58 @@ class AnonymousLanding extends Component {
           </a>
 
           <a
-            href={AuthConfig.GITHUB_REDIRECT_LINK}
-            className={`${classes.logInButton} githubAuth mt-4`}  // Add margin here
+            href={this.state.agreed ? AuthConfig.GITHUB_REDIRECT_LINK : undefined}
+            onClick={(e) => {
+              if (!this.state.agreed) {
+                e.preventDefault();
+                this.setState({ showError: true });
+              } else {
+                this.setState({ showError: false });
+              }
+            }}
+            className={`${classes.logInButton} githubAuth mt-10`}
+            style={{
+              opacity: this.state.agreed ? 1 : 0.5,
+            }}
           >
             <img className={classes.buttonImage} src={AuthGithubIcon} alt="" />
             <Typography className={classes.buttonText}>Sign in with GitHub</Typography>
           </a>
+
+          <div className={classes.consentWrapper}>
+            <FormControlLabel
+              className={classes.consentLabel}
+              control={
+                <Checkbox
+                  checked={this.state.agreed}
+                  onChange={(e) =>
+                    this.setState({ agreed: e.target.checked, showError: false })
+                  }
+                  name="consent"
+                  style={{ color: 'white' }}
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  I agree to the{" "}
+                  <a
+                    href="https://konik.ai/privacy/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: 'underline', color: 'white' }}
+                  >
+                    Terms of Service
+                  </a>
+                </Typography>
+              }
+            />
+
+            {this.state.showError && (
+              <Typography className={classes.errorText}>
+                You must agree to the Terms before signing in.
+              </Typography>
+            )}
+          </div>
 
           <span className="max-w-sm text-center mt-2 mb-8 text-sm">
             Make sure to sign in with the same account if you have previously
